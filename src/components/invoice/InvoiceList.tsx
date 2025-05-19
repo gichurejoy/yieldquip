@@ -12,48 +12,154 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
+import InvoiceDetails from "./InvoiceDetails";
 
 // Sample data for demonstration
 const sampleInvoices = [
   {
     id: "INV-2025-001",
     client: "Green Fields Farm",
+    clientEmail: "contact@greenfields.com",
+    clientAddress: "123 Farm Road, Agricultural Zone, Nairobi",
     date: "2025-05-01",
     dueDate: "2025-05-15",
     amount: 1250.75,
     status: "paid",
+    items: [
+      {
+        id: "item-1",
+        description: "Organic Maize Seeds",
+        quantity: 50,
+        unitPrice: 15.99,
+        unit: "kg"
+      },
+      {
+        id: "item-2",
+        description: "NPK Fertilizer",
+        quantity: 25,
+        unitPrice: 35.99,
+        unit: "kg"
+      }
+    ],
+    notes: "Delivery included. Payment terms: 15 days",
+    paymentMethod: "MPesa",
+    paymentReference: "MPESA-123456"
   },
   {
     id: "INV-2025-002",
     client: "Sunset Orchards",
+    clientEmail: "info@sunsetorchards.com",
+    clientAddress: "456 Orchard Lane, Fruit Valley, Mombasa",
     date: "2025-05-01",
     dueDate: "2025-05-15",
     amount: 875.50,
     status: "pending",
+    items: [
+      {
+        id: "item-1",
+        description: "Fruit Tree Saplings",
+        quantity: 20,
+        unitPrice: 35.75,
+        unit: "pieces"
+      },
+      {
+        id: "item-2",
+        description: "Organic Pesticide",
+        quantity: 10,
+        unitPrice: 14.80,
+        unit: "liters"
+      }
+    ],
+    notes: "Free delivery for orders above 500",
+    paymentMethod: "Bank Transfer",
+    paymentReference: null
   },
   {
     id: "INV-2025-003",
     client: "Valley Dairy Co-op",
+    clientEmail: "sales@valleydairy.com",
+    clientAddress: "789 Dairy Road, Milk Valley, Nakuru",
     date: "2025-04-28",
     dueDate: "2025-05-12",
     amount: 2340.00,
     status: "overdue",
+    items: [
+      {
+        id: "item-1",
+        description: "Dairy Feed",
+        quantity: 100,
+        unitPrice: 20.00,
+        unit: "kg"
+      },
+      {
+        id: "item-2",
+        description: "Mineral Supplements",
+        quantity: 25,
+        unitPrice: 13.60,
+        unit: "kg"
+      }
+    ],
+    notes: "Bulk order discount applied",
+    paymentMethod: "Bank Transfer",
+    paymentReference: null
   },
   {
     id: "INV-2025-004",
     client: "Highland Livestock",
+    clientEmail: "contact@highlandlivestock.com",
+    clientAddress: "321 Highland Road, Livestock Zone, Eldoret",
     date: "2025-04-25",
     dueDate: "2025-05-09",
     amount: 1675.25,
     status: "paid",
+    items: [
+      {
+        id: "item-1",
+        description: "Animal Feed",
+        quantity: 75,
+        unitPrice: 18.50,
+        unit: "kg"
+      },
+      {
+        id: "item-2",
+        description: "Veterinary Supplies",
+        quantity: 15,
+        unitPrice: 45.35,
+        unit: "pieces"
+      }
+    ],
+    notes: "Priority delivery requested",
+    paymentMethod: "MPesa",
+    paymentReference: "MPESA-789012"
   },
   {
     id: "INV-2025-005",
     client: "Organic Harvests Inc.",
+    clientEmail: "info@organicharvests.com",
+    clientAddress: "654 Organic Street, Green Valley, Kisumu",
     date: "2025-04-20",
     dueDate: "2025-05-04",
     amount: 925.00,
     status: "pending",
+    items: [
+      {
+        id: "item-1",
+        description: "Organic Seeds Collection",
+        quantity: 30,
+        unitPrice: 25.00,
+        unit: "packets"
+      },
+      {
+        id: "item-2",
+        description: "Natural Fertilizer",
+        quantity: 20,
+        unitPrice: 8.75,
+        unit: "kg"
+      }
+    ],
+    notes: "Standard delivery",
+    paymentMethod: "Bank Transfer",
+    paymentReference: null
   },
 ];
 
@@ -64,6 +170,7 @@ interface InvoiceListProps {
 const InvoiceList: React.FC<InvoiceListProps> = ({ onOperation }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [invoices, setInvoices] = useState(sampleInvoices);
+  const [selectedInvoice, setSelectedInvoice] = useState<typeof sampleInvoices[0] | null>(null);
 
   const filteredInvoices = invoices.filter(
     (invoice) =>
@@ -85,10 +192,10 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ onOperation }) => {
   };
 
   const handleMarkAsPaid = (invoiceId: string) => {
-    setInvoices(invoices.map(inv => 
+    setInvoices(invoices.map(inv =>
       inv.id === invoiceId ? { ...inv, status: "paid" } : inv
     ));
-    
+
     if (onOperation) {
       onOperation("paid", invoiceId);
     } else {
@@ -131,6 +238,15 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ onOperation }) => {
 
   return (
     <div className="space-y-6">
+      {selectedInvoice && (
+        <InvoiceDetails
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+          onPrint={handlePrint}
+          onDownload={handleDownload}
+        />
+      )}
+
       <div className="flex gap-4 items-center justify-between flex-wrap">
         <div className="relative w-full md:w-64">
           <Input
@@ -140,7 +256,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ onOperation }) => {
             className="pl-3"
           />
         </div>
-        
+
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
@@ -171,7 +287,11 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ onOperation }) => {
               </TableRow>
             ) : (
               filteredInvoices.map((invoice) => (
-                <TableRow key={invoice.id}>
+                <TableRow
+                  key={invoice.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedInvoice(invoice)}
+                >
                   <TableCell className="font-medium">{invoice.id}</TableCell>
                   <TableCell>{invoice.client}</TableCell>
                   <TableCell>{invoice.date}</TableCell>
@@ -186,27 +306,27 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ onOperation }) => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="Print" 
+                    <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Print"
                         onClick={() => handlePrint(invoice.id)}
                       >
                         <Printer className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="Download" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Download"
                         onClick={() => handleDownload(invoice.id)}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
                       {invoice.status !== "paid" && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           title="Mark as Paid"
                           onClick={() => handleMarkAsPaid(invoice.id)}
                         >
